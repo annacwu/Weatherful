@@ -24,12 +24,16 @@ struct Result: Codable {
 }
 
 struct ContentView: View {
+    func loadData() async{
+        guard let url = URL(string: "https://api.weather.gov/points/{lat},{lon}") else {
+            print("Invalid URL")
+            return
+        }
+    }
+    @State private var result = [Result]()
     var body: some View {
         VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+//            Text(item.username)
         }
         .padding()
     }
