@@ -7,36 +7,88 @@
 
 import SwiftUI
 
-func performAPICall() async throws {
-    // need lat long
-    // json wrapper?
-    // user id
-}
-
-struct Response: Codable{
-    var result: [Result]
-}
-
-struct Result: Codable {
-    var id = UUID()
-    var username: String
-    var name: String
-}
-
 struct ContentView: View {
-    func loadData() async{
-        guard let url = URL(string: "https://api.weather.gov/points/{lat},{lon}") else {
-            print("Invalid URL")
-            return
-        }
-    }
-    @State private var result = [Result]()
+    
+    @State private var locationForecast: locationURL?
+    @State private var Temper: Temp?
+    
     var body: some View {
-        VStack {
-//            Text(item.username)
+        Form{
+            Text(Temper?.temperature ?? "Temperature")
+            Text("Hourly: ")
         }
         .padding()
+        .task {
+            do {
+                locationForecast = try await getLocationURL()
+            } catch GLError.invalidURL {
+                print("invalid URL")
+            } catch GLError.invalidResponse {
+                print("invalid response")
+            } catch GLError.invalidData {
+                print("invalid data")
+            } catch {
+                print("unexpected error")
+            }
+        }
     }
+    
+    func getTemp() async throws -> Temp{
+        let endpoint = locationForecast?.forecast ?? ""
+        
+        guard let url = URL(string: endpoint) else {
+            throw GLError.invalidURL
+        }
+        
+        let (data, response) = try await URLSession.shared.data(from: url)
+        
+        guard let response = response as? HTTPURLResponse, response.statusCode == 200 else {
+            throw GLError.invalidResponse
+        }
+        
+        do {
+            let decoder = JSONDecoder()
+            return try decoder.decode(Temp.self, from: data)
+        } catch {
+            throw GLError.invalidData
+        }
+    }
+    
+    func getLocationURL() async throws -> locationURL{
+        let endpoint = "https://api.weather.gov/points/38,-77"
+        
+        guard let url = URL(string: endpoint) else {
+            throw GLError.invalidURL
+        }
+        
+        let (data, response) = try await URLSession.shared.data(from: url)
+        
+        guard let response = response as? HTTPURLResponse, response.statusCode == 200 else {
+            throw GLError.invalidResponse
+        }
+        
+        do {
+            let decoder = JSONDecoder()
+            return try decoder.decode(locationURL.self, from: data)
+        } catch {
+            throw GLError.invalidData
+        }
+    }
+}
+
+struct Temp: Codable {
+    let temperature: String
+}
+
+struct locationURL: Codable {
+    let forecast: String
+    let forecastHourly: String
+}
+
+enum GLError: Error {
+    case invalidURL
+    case invalidResponse
+    case invalidData
 }
 
 #Preview {
