@@ -14,8 +14,7 @@ struct ContentView: View {
     
     var body: some View {
         Form{
-            Text(Temper?.temperature ?? "Temperature")
-            Text("Hourly: ")
+            Text(Temper?.temperature ?? "temperature unavailable")
         }
         .padding()
         .task {
@@ -31,10 +30,23 @@ struct ContentView: View {
                 print("unexpected error")
             }
         }
+        .task {
+            do {
+                Temper = try await getTemp()
+            } catch GLError.invalidURL {
+                print("invalid URL")
+            } catch GLError.invalidResponse {
+                print("invalid response")
+            } catch GLError.invalidData {
+                print("invalid data")
+            } catch {
+                print("unexpected error")
+            }
+        }
     }
     
     func getTemp() async throws -> Temp{
-        let endpoint = locationForecast?.forecast ?? ""
+        let endpoint = "https://api.weather.gov/gridpoints/LWX/97,71/forecast"
         
         guard let url = URL(string: endpoint) else {
             throw GLError.invalidURL
