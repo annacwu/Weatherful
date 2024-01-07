@@ -9,27 +9,27 @@ import SwiftUI
 
 struct ContentView: View {
     
-    @State private var locationForecast: locationURL?
-    @State private var Temper: Temp?
+//    @State private var locationForecast: LocationURL?
+    @State private var Temper: [Temp]?
     
     var body: some View {
         Form{
-            Text(Temper?.temperature ?? "temperature unavailable")
+            Text(Temper?.first?.temperature ?? "temperature unavailable")
         }
         .padding()
-        .task {
-            do {
-                locationForecast = try await getLocationURL()
-            } catch GLError.invalidURL {
-                print("invalid URL")
-            } catch GLError.invalidResponse {
-                print("invalid response")
-            } catch GLError.invalidData {
-                print("invalid data")
-            } catch {
-                print("unexpected error")
-            }
-        }
+//        .task {
+//            do {
+//                locationForecast = try await getLocationURL()
+//            } catch GLError.invalidURL {
+//                print("invalid URL")
+//            } catch GLError.invalidResponse {
+//                print("invalid response")
+//            } catch GLError.invalidData {
+//                print("invalid data")
+//            } catch {
+//                print("unexpected error")
+//            }
+//        }
         .task {
             do {
                 Temper = try await getTemp()
@@ -45,7 +45,7 @@ struct ContentView: View {
         }
     }
     
-    func getTemp() async throws -> Temp{
+    func getTemp() async throws -> [Temp]{
         let endpoint = "https://api.weather.gov/gridpoints/LWX/97,71/forecast"
         
         guard let url = URL(string: endpoint) else {
@@ -60,39 +60,39 @@ struct ContentView: View {
         
         do {
             let decoder = JSONDecoder()
-            return try decoder.decode(Temp.self, from: data)
+            return try decoder.decode([Temp].self, from: data)
         } catch {
             throw GLError.invalidData
         }
     }
     
-    func getLocationURL() async throws -> locationURL{
-        let endpoint = "https://api.weather.gov/points/38,-77"
-        
-        guard let url = URL(string: endpoint) else {
-            throw GLError.invalidURL
-        }
-        
-        let (data, response) = try await URLSession.shared.data(from: url)
-        
-        guard let response = response as? HTTPURLResponse, response.statusCode == 200 else {
-            throw GLError.invalidResponse
-        }
-        
-        do {
-            let decoder = JSONDecoder()
-            return try decoder.decode(locationURL.self, from: data)
-        } catch {
-            throw GLError.invalidData
-        }
-    }
+//    func getLocationURL() async throws -> locationURL{
+//        let endpoint = "https://api.weather.gov/points/38,-77"
+//        
+//        guard let url = URL(string: endpoint) else {
+//            throw GLError.invalidURL
+//        }
+//        
+//        let (data, response) = try await URLSession.shared.data(from: url)
+//        
+//        guard let response = response as? HTTPURLResponse, response.statusCode == 200 else {
+//            throw GLError.invalidResponse
+//        }
+//        
+//        do {
+//            let decoder = JSONDecoder()
+//            return try decoder.decode(locationURL.self, from: data)
+//        } catch {
+//            throw GLError.invalidData
+//        }
+//    }
 }
 
 struct Temp: Codable {
     let temperature: String
 }
 
-struct locationURL: Codable {
+struct LocationURL: Codable {
     let forecast: String
     let forecastHourly: String
 }
